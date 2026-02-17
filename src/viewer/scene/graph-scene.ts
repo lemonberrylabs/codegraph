@@ -16,6 +16,12 @@ export class GraphScene {
   private animationId: number = 0;
   private onFrameCallbacks: ((delta: number) => void)[] = [];
 
+  // Auto-rotate
+  private autoRotateEnabled: boolean = false;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleAutoRotate: boolean = false;
+  private static IDLE_TIMEOUT = 8000; // ms before auto-rotate kicks in
+
   constructor(container: HTMLElement) {
     this.container = container;
     const palette = getPalette();
@@ -79,6 +85,13 @@ export class GraphScene {
 
     // Handle resize
     window.addEventListener('resize', this.onResize);
+
+    // Reset idle timer on user interaction
+    const resetIdle = () => this.resetIdleTimer();
+    this.renderer.domElement.addEventListener('pointerdown', resetIdle);
+    this.renderer.domElement.addEventListener('pointermove', resetIdle);
+    this.renderer.domElement.addEventListener('wheel', resetIdle);
+    document.addEventListener('keydown', resetIdle);
   }
 
   onFrame(callback: (delta: number) => void): void {
@@ -156,6 +169,44 @@ export class GraphScene {
 
   getCameraDistance(): number {
     return this.camera.position.distanceTo(this.controls.target);
+  }
+
+  /** Toggle auto-rotate feature */
+  toggleAutoRotate(): boolean {
+    this.autoRotateEnabled = !this.autoRotateEnabled;
+    if (this.autoRotateEnabled) {
+      this.controls.autoRotate = true;
+      this.controls.autoRotateSpeed = 1.0;
+    } else {
+      this.controls.autoRotate = false;
+      this.idleAutoRotate = false;
+      if (this.idleTimer) clearTimeout(this.idleTimer);
+    }
+    return this.autoRotateEnabled;
+  }
+
+  isAutoRotateEnabled(): boolean {
+    return this.autoRotateEnabled;
+  }
+
+  private resetIdleTimer(): void {
+    // Stop idle auto-rotate on user interaction
+    if (this.idleAutoRotate) {
+      this.idleAutoRotate = false;
+      if (!this.autoRotateEnabled) {
+        this.controls.autoRotate = false;
+      }
+    }
+
+    if (!this.autoRotateEnabled) return;
+
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    this.idleTimer = setTimeout(() => {
+      if (this.autoRotateEnabled) {
+        this.idleAutoRotate = true;
+        this.controls.autoRotate = true;
+      }
+    }, GraphScene.IDLE_TIMEOUT);
   }
 
   /** Capture screenshot as data URL */

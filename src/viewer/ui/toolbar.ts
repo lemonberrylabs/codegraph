@@ -13,6 +13,7 @@ import {
   exportDeadCodeCSV,
   exportMarkdownReport,
 } from './export.js';
+import { initHighlight, toggleHighlightMenu } from './highlight.js';
 
 export interface ToolbarDeps {
   graphScene: GraphScene;
@@ -74,6 +75,24 @@ export function setupToolbar(deps: ToolbarDeps): void {
     deps.graphScene.resetCamera();
   });
 
+  document.getElementById('btn-autorotate')?.addEventListener('click', () => {
+    const active = deps.graphScene.toggleAutoRotate();
+    document.getElementById('btn-autorotate')?.classList.toggle('active', active);
+  });
+
+  // Highlight mode
+  initHighlight(deps.store, deps.nodeRenderer, deps.edgeRenderer);
+  const highlightMenu = document.getElementById('highlight-menu');
+  document.getElementById('btn-highlight')?.addEventListener('click', (e) => {
+    if (highlightMenu) {
+      const btn = e.currentTarget as HTMLElement;
+      const rect = btn.getBoundingClientRect();
+      highlightMenu.style.top = `${rect.bottom + 4}px`;
+      highlightMenu.style.left = `${rect.left}px`;
+    }
+    toggleHighlightMenu();
+  });
+
   // Colorblind mode toggle
   let colorblindMode = false;
   document.getElementById('btn-colorblind')?.addEventListener('click', () => {
@@ -110,11 +129,14 @@ export function setupToolbar(deps: ToolbarDeps): void {
     exportMenu.style.display = 'none';
   });
 
-  // Close export menu on click outside
+  // Close menus on click outside
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     if (!target.closest('#export-menu') && !target.closest('#btn-export')) {
       exportMenu.style.display = 'none';
+    }
+    if (highlightMenu && !target.closest('#highlight-menu') && !target.closest('#btn-highlight')) {
+      highlightMenu.style.display = 'none';
     }
   });
 }

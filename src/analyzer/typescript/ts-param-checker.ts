@@ -3,6 +3,7 @@ import type { Parameter } from '../types.js';
 
 /**
  * Extract parameters from a function declaration and check if each is used.
+ * For destructured parameters, reports individual unused bindings per PRD 5.5.1.
  */
 export function extractParameters(
   node: ts.FunctionLikeDeclaration,
@@ -16,7 +17,14 @@ export function extractParameters(
     const param = node.parameters[i];
     const paramInfo = extractSingleParam(param, i, checker, sourceFile, node);
     parameters.push(paramInfo);
-    if (!paramInfo.isUsed) {
+
+    // For destructured params, report individual unused bindings
+    if (ts.isObjectBindingPattern(param.name) || ts.isArrayBindingPattern(param.name)) {
+      if (node.body) {
+        const unusedBindings = getUnusedBindings(param.name, node.body);
+        unusedParameters.push(...unusedBindings);
+      }
+    } else if (!paramInfo.isUsed) {
       unusedParameters.push(paramInfo.name);
     }
   }
@@ -112,6 +120,27 @@ function isDestructuredParamUsed(
     }
   }
   return false;
+}
+
+/** Get individual unused binding names from a destructured parameter */
+function getUnusedBindings(
+  pattern: ts.ObjectBindingPattern | ts.ArrayBindingPattern,
+  body: ts.Node
+): string[] {
+  const unused: string[] = [];
+  for (const element of pattern.elements) {
+    if (ts.isBindingElement(element)) {
+      if (ts.isIdentifier(element.name)) {
+        if (element.name.text.startsWith('_')) continue;
+        if (!isIdentifierUsedInBody(element.name.text, body)) {
+          unused.push(element.name.text);
+        }
+      } else if (ts.isObjectBindingPattern(element.name) || ts.isArrayBindingPattern(element.name)) {
+        unused.push(...getUnusedBindings(element.name, body));
+      }
+    }
+  }
+  return unused;
 }
 
 /** Check if an identifier name appears in the function body */

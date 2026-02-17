@@ -141,6 +141,13 @@ export function setupKeyboard(deps: KeyboardDeps): void {
         break;
       }
 
+      case 'a':
+      case 'A': {
+        const active = deps.graphScene.toggleAutoRotate();
+        document.getElementById('btn-autorotate')?.classList.toggle('active', active);
+        break;
+      }
+
       case '?':
         helpOverlay.classList.toggle('visible');
         break;

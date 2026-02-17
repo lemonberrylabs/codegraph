@@ -1,5 +1,6 @@
 import type { GraphNode, GraphEdge } from '../../analyzer/types.js';
 import { GraphStore, NodeIndex } from '../data/graph-store.js';
+import { setHighlightMode, clearHighlightMode } from './highlight.js';
 
 const sidePanel = document.getElementById('side-panel')!;
 const panelTitle = document.getElementById('panel-title')!;
@@ -123,6 +124,15 @@ export function showNodeDetails(nodeIdx: NodeIndex, store: GraphStore): void {
       ` : '<p style="color:var(--text-muted);font-size:13px">No calls</p>'}
     </div>
 
+    <div class="panel-section">
+      <h3>Highlight</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="toolbar-btn" id="btn-hl-reachable" style="flex:1;font-size:12px">Reachable From</button>
+        <button class="toolbar-btn" id="btn-hl-dependents" style="flex:1;font-size:12px">Dependents Of</button>
+      </div>
+      <button class="toolbar-btn" id="btn-hl-clear" style="width:100%;font-size:12px">Clear Highlight</button>
+    </div>
+
     <div class="panel-section" style="display:flex;gap:8px">
       <button class="toolbar-btn" id="btn-view-source" style="flex:1">View Source</button>
       <button class="toolbar-btn" id="btn-copy-id" style="flex:1">Copy ID</button>
@@ -158,6 +168,20 @@ export function showNodeDetails(nodeIdx: NodeIndex, store: GraphStore): void {
   // Copy ID button
   panelBody.querySelector('#btn-copy-id')?.addEventListener('click', () => {
     navigator.clipboard.writeText(node.id);
+  });
+
+  // Highlight buttons
+  panelBody.querySelector('#btn-hl-reachable')?.addEventListener('click', () => {
+    setHighlightMode({ mode: 'reachable-from', nodeId: node.id });
+    document.getElementById('btn-highlight')?.classList.add('active');
+  });
+  panelBody.querySelector('#btn-hl-dependents')?.addEventListener('click', () => {
+    setHighlightMode({ mode: 'reachable-to', nodeId: node.id });
+    document.getElementById('btn-highlight')?.classList.add('active');
+  });
+  panelBody.querySelector('#btn-hl-clear')?.addEventListener('click', () => {
+    clearHighlightMode();
+    document.getElementById('btn-highlight')?.classList.remove('active');
   });
 
   openPanel();

@@ -545,7 +545,9 @@
     <div class="toolbar-separator"></div>
     <button class="toolbar-btn" id="btn-search" title="Search (/)">⌘K</button>
     <button class="toolbar-btn" id="btn-reset" title="Reset camera (R)">Reset</button>
+    <button class="toolbar-btn" id="btn-autorotate" title="Auto-rotate (A)">Spin</button>
     <div class="toolbar-separator"></div>
+    <button class="toolbar-btn" id="btn-highlight" title="Highlight mode">Highlight</button>
     <button class="toolbar-btn" id="btn-filters" title="Advanced filters">Filters</button>
     <button class="toolbar-btn" id="btn-colorblind" title="Colorblind mode">A11y</button>
     <button class="toolbar-btn" id="btn-export" title="Export report">Export</button>
@@ -558,6 +560,9 @@
     <button class="toolbar-btn" id="export-csv" style="width:100%;text-align:left">Dead Code Report (CSV)</button>
     <button class="toolbar-btn" id="export-md" style="width:100%;text-align:left">Full Report (Markdown)</button>
   </div>
+
+  <!-- Highlight mode dropdown -->
+  <div id="highlight-menu" style="display:none; position:fixed; z-index:200; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:4px; min-width:220px; max-height:400px; overflow-y:auto;"></div>
 
   <!-- Search overlay -->
   <div id="search-overlay">
@@ -600,6 +605,7 @@
     <div class="shortcut-row"><span>Pause simulation</span><kbd>Space</kbd></div>
     <div class="shortcut-row"><span>Cycle flagged</span><kbd>Tab</kbd></div>
     <div class="shortcut-row"><span>Deselect / close</span><kbd>Esc</kbd></div>
+    <div class="shortcut-row"><span>Auto-rotate</span><kbd>A</kbd></div>
     <div class="shortcut-row"><span>Help</span><kbd>?</kbd></div>
   </div>
 

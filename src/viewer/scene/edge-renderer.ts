@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GraphStore } from '../data/graph-store.js';
 import { getPalette } from '../utils/colors.js';
-import { getLODLevel, getEdgeOpacity } from '../utils/lod.js';
+import { getSmoothEdgeOpacity } from '../utils/lod.js';
 import type { GraphScene } from './graph-scene.js';
 
 export class EdgeRenderer {
@@ -150,10 +150,9 @@ export class EdgeRenderer {
     colorAttr.needsUpdate = true;
   }
 
-  /** Update LOD-based opacity */
+  /** Update LOD-based opacity with smooth interpolation */
   updateLOD(cameraDistance: number): void {
-    const level = getLODLevel(cameraDistance);
-    const opacity = getEdgeOpacity(level);
+    const opacity = getSmoothEdgeOpacity(cameraDistance);
     (this.lineSegments.material as THREE.LineBasicMaterial).opacity = opacity;
   }
 
