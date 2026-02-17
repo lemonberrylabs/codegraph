@@ -12,6 +12,12 @@ export function matchEntryPoints(
   const entryIds: Set<string> = new Set();
 
   for (const node of nodes) {
+    // Respect entry points already marked by the analyzer (e.g., Go var-init nodes)
+    if (node.isEntryPoint) {
+      entryIds.add(node.id);
+      continue;
+    }
+
     for (const config of entryPointConfigs) {
       if (isEntryPoint(node, config)) {
         node.isEntryPoint = true;

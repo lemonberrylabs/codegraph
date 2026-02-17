@@ -12,6 +12,7 @@ interface LayoutNode {
   vz: number;
   cluster: number;
   mass: number;
+  targetZ: number;
 }
 
 interface LayoutEdge {
@@ -26,6 +27,7 @@ interface InitMessage {
   clusterAssignments: number[];  // cluster index per node
   clusterCount: number;
   masses: number[];  // node masses (based on linesOfCode)
+  depths: number[];  // call depth from entry points (-1 = unreachable)
 }
 
 interface TickMessage {
@@ -53,6 +55,8 @@ const CHARGE_STRENGTH = -60;
 const CLUSTER_ATTRACTION = 0.25;
 const CENTER_GRAVITY = 0.01;
 const COLLISION_RADIUS_EXTRA = 2;
+const DEPTH_SCALE = 40;
+const DEPTH_STRENGTH = 0.3;
 const ALPHA_DECAY = 0.02;
 const ALPHA_MIN = 0.001;
 const VELOCITY_DECAY = 0.4;
@@ -101,15 +105,20 @@ function initSimulation(msg: InitMessage): void {
     const phi = Math.acos(2 * Math.random() - 1);
     const r = radius * Math.cbrt(Math.random());
 
+    // Compute target Z from call depth; unreachable nodes (-1) go below entry points
+    const depth = msg.depths[i] ?? -1;
+    const targetZ = depth >= 0 ? depth * DEPTH_SCALE : -DEPTH_SCALE;
+
     nodes.push({
       x: r * Math.sin(phi) * Math.cos(theta),
       y: r * Math.sin(phi) * Math.sin(theta),
-      z: r * Math.cos(phi),
+      z: targetZ, // initialize at target depth for faster convergence
       vx: 0,
       vy: 0,
       vz: 0,
       cluster: msg.clusterAssignments[i] || 0,
       mass: msg.masses[i] || 1,
+      targetZ,
     });
   }
 
@@ -162,6 +171,7 @@ function tick(): void {
   applyLinkForce();
   applyClusterForce();
   applyCenterGravity();
+  applyDepthLayerForce();
 
   // Update positions
   for (const node of nodes) {
@@ -314,7 +324,14 @@ function applyCenterGravity(): void {
   for (const node of nodes) {
     node.vx -= node.x * CENTER_GRAVITY;
     node.vy -= node.y * CENTER_GRAVITY;
-    node.vz -= node.z * CENTER_GRAVITY;
+    // Z is managed by depth layer force, only apply weak centering
+    node.vz -= node.z * CENTER_GRAVITY * 0.1;
+  }
+}
+
+function applyDepthLayerForce(): void {
+  for (const node of nodes) {
+    node.vz += (node.targetZ - node.z) * DEPTH_STRENGTH;
   }
 }
 

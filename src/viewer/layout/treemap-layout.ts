@@ -8,9 +8,9 @@ interface TreemapRect {
 }
 
 /**
- * Treemap layout — arranges nodes in a flat plane partitioned into rectangular
- * regions by cluster (package/module). The Z-axis represents call depth
- * (distance from entry points). Per PRD 6.7.2.
+ * Treemap layout — arranges nodes in a 2D plane partitioned into rectangular
+ * regions by cluster (package/module). Z-axis provides subtle height based on
+ * call depth from entry points. Designed to be viewed from above.
  */
 export class TreemapLayout {
   private store: GraphStore;
@@ -21,10 +21,6 @@ export class TreemapLayout {
     this.positions = new Float32Array(store.nodeCount * 3);
   }
 
-  /**
-   * Compute treemap positions and return them.
-   * Calls the onUpdate callback once with final positions.
-   */
   compute(onUpdate: (positions: Float32Array) => void): void {
     const nodes = this.store.nodes;
     const nodeCount = nodes.length;
@@ -42,13 +38,13 @@ export class TreemapLayout {
       arr.push(i);
     }
 
-    // Compute call depth (BFS from entry points) for Z-axis
+    // Compute call depth for Z-axis
     const depths = this.computeCallDepths();
 
-    // Layout clusters using a simple squarified treemap
+    // Layout clusters using squarified treemap
     const clusters = [...clusterMap.entries()].sort((a, b) => b[1].length - a[1].length);
     const totalArea = nodeCount;
-    const canvasSize = Math.sqrt(totalArea) * 30; // Scale factor for spacing
+    const canvasSize = Math.sqrt(totalArea) * 10;
 
     const rects = this.squarify(
       clusters.map(([id, nodeIndices]) => ({
@@ -67,15 +63,11 @@ export class TreemapLayout {
     onUpdate(this.positions);
   }
 
-  /**
-   * Compute call depth for each node via BFS from entry points.
-   */
   private computeCallDepths(): number[] {
     const nodes = this.store.nodes;
     const depths = new Array(nodes.length).fill(-1);
     const queue: number[] = [];
 
-    // Start BFS from entry points
     for (let i = 0; i < nodes.length; i++) {
       if (nodes[i].isEntryPoint || nodes[i].status === 'entry') {
         depths[i] = 0;
@@ -83,7 +75,6 @@ export class TreemapLayout {
       }
     }
 
-    // If no entry points, start from nodes with no incoming edges
     if (queue.length === 0) {
       for (let i = 0; i < nodes.length; i++) {
         const nodeIdx = this.store.getNodeByIndex(i);
@@ -94,7 +85,6 @@ export class TreemapLayout {
       }
     }
 
-    // BFS
     while (queue.length > 0) {
       const idx = queue.shift()!;
       const nodeIdx = this.store.getNodeByIndex(idx);
@@ -110,17 +100,16 @@ export class TreemapLayout {
       }
     }
 
-    // Assign depth 0 to any unreached nodes
+    // Unreachable nodes get depth -1 (placed slightly below the grid)
+    // instead of 0, so they don't pile up with entry points.
+    const maxDepth = Math.max(1, ...depths.filter(d => d >= 0));
     for (let i = 0; i < depths.length; i++) {
-      if (depths[i] === -1) depths[i] = 0;
+      if (depths[i] === -1) depths[i] = -1; // stays -1 → below the grid
     }
 
     return depths;
   }
 
-  /**
-   * Simple squarified treemap algorithm.
-   */
   private squarify(
     items: { id: string; nodeIndices: number[]; area: number }[],
     bounds: TreemapRect
@@ -136,10 +125,8 @@ export class TreemapLayout {
     const totalArea = items.reduce((sum, item) => sum + item.area, 0);
     const { width, height } = bounds;
 
-    // Split horizontally or vertically based on aspect ratio
     const isWide = width >= height;
 
-    // Binary split: find the split point that makes the first half roughly square
     let runningArea = 0;
     let splitIdx = 0;
     const halfArea = totalArea / 2;
@@ -179,10 +166,6 @@ export class TreemapLayout {
     return results;
   }
 
-  /**
-   * Place nodes within a rectangular region in a grid pattern.
-   * Z-axis is set based on call depth.
-   */
   private placeNodesInRect(
     nodeIndices: number[],
     rect: TreemapRect,
@@ -191,13 +174,14 @@ export class TreemapLayout {
     const count = nodeIndices.length;
     if (count === 0) return;
 
-    // Grid layout within the rectangle
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
 
     const cellW = rect.width / (cols + 1);
     const cellH = rect.height / (rows + 1);
-    const depthScale = 15; // Z units per call depth level
+    // Subtle Z height — treemap is meant to be viewed from above.
+    // depthScale is small so Z just adds a gentle layering effect.
+    const depthScale = 5;
 
     for (let i = 0; i < count; i++) {
       const nodeIdx = nodeIndices[i];

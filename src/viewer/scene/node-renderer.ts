@@ -49,6 +49,7 @@ export class NodeRenderer {
 
     this.instancedMesh = new THREE.InstancedMesh(geometry, material, nodeCount);
     this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.instancedMesh.frustumCulled = false;
 
     // Initialize per-instance colors
     this.baseColors = new Float32Array(nodeCount * 3);
@@ -73,6 +74,7 @@ export class NodeRenderer {
 
     this.instancedMesh.instanceColor!.needsUpdate = true;
     this.instancedMesh.instanceMatrix.needsUpdate = true;
+    this.instancedMesh.computeBoundingSphere();
 
     this.scene.scene.add(this.instancedMesh);
 
@@ -122,6 +124,7 @@ export class NodeRenderer {
     }
 
     this.instancedMesh.instanceMatrix.needsUpdate = true;
+    this.instancedMesh.computeBoundingSphere();
   }
 
   private updateInstanceTransform(
@@ -217,6 +220,7 @@ export class NodeRenderer {
       this.updateInstanceTransform(i, nodeIdx.position, size);
     }
     this.instancedMesh.instanceMatrix.needsUpdate = true;
+    this.instancedMesh.computeBoundingSphere();
   }
 
   getInstancedMesh(): THREE.InstancedMesh {

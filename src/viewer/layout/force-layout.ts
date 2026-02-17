@@ -21,9 +21,14 @@ export class ForceLayout {
       const msg = e.data;
       if (msg.type === 'positions') {
         this.alpha = msg.alpha;
-        this.onPositionUpdate?.(msg.positions);
 
-        // Continue ticking if still running
+        // Only apply positions if simulation is still running.
+        // This prevents in-flight ticks from overwriting treemap positions
+        // after the layout has been paused.
+        if (this.running) {
+          this.onPositionUpdate?.(msg.positions);
+        }
+
         if (this.running && this.alpha > 0.001) {
           this.worker.postMessage({ type: 'tick' });
         }
@@ -55,6 +60,9 @@ export class ForceLayout {
     // Node masses based on linesOfCode
     const masses = nodes.map(n => Math.log2(Math.max(1, n.linesOfCode)));
 
+    // Compute call depths (BFS from entry points) for Z-axis layering
+    const depths = this.computeCallDepths();
+
     this.worker.postMessage({
       type: 'init',
       nodeCount: nodes.length,
@@ -62,7 +70,52 @@ export class ForceLayout {
       clusterAssignments,
       clusterCount: clusterIds.length,
       masses,
+      depths,
     });
+  }
+
+  /** BFS from entry points to compute call depth per node */
+  private computeCallDepths(): number[] {
+    const nodes = this.store.nodes;
+    const depths = new Array(nodes.length).fill(-1);
+    const queue: number[] = [];
+
+    // Seed with entry points
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].isEntryPoint || nodes[i].status === 'entry') {
+        depths[i] = 0;
+        queue.push(i);
+      }
+    }
+
+    // Fallback: if no entry points, use nodes with no incoming edges
+    if (queue.length === 0) {
+      for (let i = 0; i < nodes.length; i++) {
+        const nodeIdx = this.store.getNodeByIndex(i);
+        if (nodeIdx && nodeIdx.incomingEdges.length === 0) {
+          depths[i] = 0;
+          queue.push(i);
+        }
+      }
+    }
+
+    // BFS
+    while (queue.length > 0) {
+      const idx = queue.shift()!;
+      const nodeIdx = this.store.getNodeByIndex(idx);
+      if (!nodeIdx) continue;
+
+      for (const edgeIdx of nodeIdx.outgoingEdges) {
+        const edge = this.store.edges[edgeIdx];
+        const target = this.store.getNodeById(edge.target);
+        if (target && depths[target.index] === -1) {
+          depths[target.index] = depths[idx] + 1;
+          queue.push(target.index);
+        }
+      }
+    }
+
+    return depths;
   }
 
   /** Start the simulation */

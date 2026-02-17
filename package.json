@@ -7,8 +7,9 @@
     "codegraph": "./dist/bin/codegraph.js"
   },
   "scripts": {
-    "build": "tsc && vite build",
-    "build:cli": "tsc",
+    "build": "pnpm run build:go && tsc && vite build",
+    "build:cli": "pnpm run build:go && tsc",
+    "build:go": "cd src/analyzer/go/go-helper && go build -o go-helper .",
     "build:viewer": "vite build",
     "dev:viewer": "vite",
     "test": "vitest run",

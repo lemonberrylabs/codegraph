@@ -30,10 +30,14 @@ export class GraphRaycaster {
     canvas.addEventListener('dblclick', this.onMouseDblClick);
   }
 
-  private onMouseMove = (event: MouseEvent): void => {
-    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  private updateMouse(event: MouseEvent): void {
+    const rect = this.scene.renderer.domElement.getBoundingClientRect();
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  }
 
+  private onMouseMove = (event: MouseEvent): void => {
+    this.updateMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.scene.camera);
 
     const mesh = this.nodeRenderer.getInstancedMesh();
@@ -54,6 +58,7 @@ export class GraphRaycaster {
   };
 
   private onMouseClick = (event: MouseEvent): void => {
+    this.updateMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.scene.camera);
 
     const mesh = this.nodeRenderer.getInstancedMesh();
@@ -72,6 +77,7 @@ export class GraphRaycaster {
   };
 
   private onMouseDblClick = (event: MouseEvent): void => {
+    this.updateMouse(event);
     this.raycaster.setFromCamera(this.mouse, this.scene.camera);
 
     const mesh = this.nodeRenderer.getInstancedMesh();

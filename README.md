@@ -16,12 +16,15 @@ Or run without installing:
 npx codegraph analyze
 ```
 
-**Language-specific requirements:**
+### Language Requirements
 
-- **Go analysis** requires the [Go toolchain](https://go.dev/dl/) (1.18+) installed and on your `PATH`.
-- **Python analysis** requires Python 3.8+.
+| Language | Requirement | Notes |
+|---|---|---|
+| TypeScript | None (built-in) | Uses the TypeScript Compiler API |
+| Go | [Go toolchain](https://go.dev/dl/) 1.21+ | Type-aware analysis with interface dispatch resolution |
+| Python | Python 3.8+ | AST-based analysis via helper script |
 
-> **Building from source?** The Go helper binary shipped in the repo is built for Linux ARM64. If you're on macOS or another platform, the CLI will auto-build it on first run using your local Go toolchain. You can also build it manually:
+> **Building from source?** The Go helper binary is not shipped in the repo. The CLI auto-builds it on first run using your local Go toolchain. You can also build it manually:
 >
 > ```bash
 > cd src/analyzer/go/go-helper && go build -o go-helper .
@@ -34,13 +37,56 @@ npx codegraph analyze
 codegraph analyze
 
 # Analyze and open the 3D viewer
-codegraph serve --open
+codegraph serve
 
 # Analyze with live-reload on file changes
-codegraph serve --open --watch
+codegraph serve --watch
 ```
 
 CodeGraph auto-detects the language from project files (`tsconfig.json`/`package.json` for TypeScript, `go.mod` for Go, `pyproject.toml`/`setup.py`/`requirements.txt` for Python).
+
+## Usage Examples
+
+### TypeScript
+
+```bash
+# Analyze a Next.js project, marking route handlers as entry points
+codegraph serve -r ./my-app --include "src/**/*.ts" --entry "src/routes/**/*.ts"
+
+# Analyze with a custom tsconfig
+codegraph analyze --tsconfig ./tsconfig.build.json
+```
+
+### Go
+
+Go analysis uses `golang.org/x/tools/go/packages` for type-aware call graph construction. It resolves interface method calls to all concrete implementations — so when `handler.ServeHTTP()` is called through an `http.Handler` interface, edges are created to every type that implements `ServeHTTP`.
+
+```bash
+# Analyze a Go project with an entry point
+codegraph serve -r /path/to/go/project -e internal/http/server.go
+
+# Analyze with live reload — re-analyzes as you edit Go files
+codegraph serve -r /path/to/go/project -e cmd/api/main.go --watch
+```
+
+**Requirements:**
+- Go 1.21+ on your `PATH`
+- A valid `go.mod` in the project root (required for type-aware analysis)
+- Dependencies fetched (`go mod download` — the analyzer loads packages via the Go build system)
+
+If `go.mod` is missing or the project has compilation errors, the analyzer falls back to AST-only analysis (no interface dispatch, no cross-package type resolution).
+
+**What gets detected automatically:**
+- `main()` and `init()` functions are always entry points
+- `TestXxx`, `BenchmarkXxx`, and `ExampleXxx` functions are entry points
+- Exported vs unexported visibility
+- Unused function parameters
+
+### Python
+
+```bash
+codegraph serve -r ./my-python-app --include "src/**/*.py" --entry "src/main.py"
+```
 
 ## Commands
 
@@ -63,12 +109,6 @@ codegraph analyze [options]
 | `--tsconfig <path>` | Path to `tsconfig.json` (TypeScript only) |
 | `-r, --root <path>` | Project root directory (default: `.`) |
 
-**Example:**
-
-```bash
-codegraph analyze --language typescript --include "src/**/*.ts" --entry "src/routes/**/*.ts" --output graph.json
-```
-
 ### `codegraph serve`
 
 Run analysis and start the interactive 3D web viewer.
@@ -88,7 +128,7 @@ Supports all `analyze` options, plus:
 **Example:**
 
 ```bash
-codegraph serve --open --watch --port 3000
+codegraph serve --watch --port 3000
 ```
 
 ## Configuration File
@@ -140,7 +180,7 @@ Entry points prevent externally-invoked functions from being falsely flagged as 
 | `decorator` | Functions with a matching decorator | `{ "type": "decorator", "name": "app.route" }` |
 | `export` | All exported symbols from matched files | `{ "type": "export", "pattern": "src/index.ts" }` |
 
-Go `main()` and `init()` functions are automatically treated as entry points.
+Go `main()`, `init()`, `TestXxx`, `BenchmarkXxx`, and `ExampleXxx` functions are automatically treated as entry points.
 
 ## 3D Viewer
 
@@ -215,13 +255,108 @@ The `analyze` command produces a JSON file containing:
 
 ## Development
 
+### Setup
+
 ```bash
+git clone <repo-url>
+cd codegraph
 pnpm install
-pnpm run build:cli      # Build CLI
-pnpm run dev:viewer     # Dev server for viewer
-pnpm run build:viewer   # Production build for viewer
-pnpm run test           # Run tests
-pnpm run typecheck      # Type checking
+```
+
+### Build
+
+```bash
+pnpm run build:cli      # Build CLI (TypeScript → dist/)
+pnpm run build:viewer   # Production build for viewer (Vite → dist/viewer/)
+pnpm run build          # Both
+```
+
+### Running Locally
+
+There are three ways to run CodeGraph from source, depending on what you're working on:
+
+#### 1. Quick run (analyze a project)
+
+Build the CLI once, then point it at any project:
+
+```bash
+pnpm run build:cli
+node ./dist/bin/codegraph.js serve -r /path/to/project
+```
+
+#### 2. Live reload for the target project (`--watch`)
+
+Re-analyzes and pushes graph updates to the browser whenever **target project files** change. Use this when you're exploring a codebase and editing its source:
+
+```bash
+pnpm run build:cli
+node ./dist/bin/codegraph.js serve -r /path/to/project -e main.go --watch
+```
+
+The browser graph updates automatically via WebSocket — no page refresh needed.
+
+#### 3. Full dev mode (viewer + analyzer development)
+
+If you're developing CodeGraph itself (changing viewer code, analyzer logic, etc.), run two processes:
+
+```bash
+# Terminal 1 — Vite dev server with hot module reload (port 3000)
+pnpm run dev:viewer
+
+# Terminal 2 — Backend API server (port 8080)
+pnpm run build:cli
+node ./dist/bin/codegraph.js serve -r /path/to/project --no-open --watch
+```
+
+Open `http://localhost:3000` — the Vite dev server proxies `/api` and `/ws` to the backend on port 8080. Viewer changes hot-reload instantly; analyzer changes require re-running `pnpm run build:cli` and restarting terminal 2.
+
+### Rebuilding the Go Helper
+
+The Go helper binary is built automatically on first use. To rebuild manually after making changes to `src/analyzer/go/go-helper/main.go`:
+
+```bash
+cd src/analyzer/go/go-helper
+go build -o go-helper .
+```
+
+Cross-compile for all platforms:
+
+```bash
+./scripts/build-go-helper.sh
+```
+
+### Testing
+
+```bash
+pnpm run test           # Run all tests
+pnpm run typecheck      # Type checking only
+```
+
+### Project Structure
+
+```
+src/
+├── cli/                 # CLI commands (analyze, serve)
+├── analyzer/
+│   ├── base-analyzer.ts # Shared analyzer logic
+│   ├── types.ts         # Shared types
+│   ├── ts/              # TypeScript analyzer (Compiler API)
+│   ├── go/              # Go analyzer
+│   │   ├── go-analyzer.ts   # TypeScript orchestrator
+│   │   └── go-helper/       # Go binary (type-aware analysis)
+│   │       └── main.go      # packages.Load + go/types + interface dispatch
+│   └── python/          # Python analyzer
+│       ├── py-analyzer.ts
+│       └── py-helper/
+├── viewer/              # Three.js 3D viewer (Vite app)
+│   ├── main.ts
+│   ├── scene/           # 3D rendering
+│   ├── interaction/     # Mouse, keyboard, selection
+│   ├── layout/          # Force-directed layout (Web Worker)
+│   └── ui/              # Panels, search, filters
+test/
+├── fixtures/            # Test projects (go-basic, go-interfaces, ts-*, py-*)
+└── analyzer/            # Analyzer test suites
 ```
 
 ## License

@@ -123,13 +123,11 @@ export class GraphScene {
   }
 
   /** Smoothly fly the camera to focus on a position */
-  flyTo(target: THREE.Vector3, duration: number = 1.0): void {
+  flyTo(target: THREE.Vector3, duration: number = 1.0, cameraPos?: THREE.Vector3): void {
     const startPos = this.camera.position.clone();
     const startTarget = this.controls.target.clone();
 
-    // Position camera at some offset from the target
-    const offset = new THREE.Vector3(0, 0, 80);
-    const endPos = target.clone().add(offset);
+    const endPos = cameraPos ?? target.clone().add(new THREE.Vector3(0, 0, 80));
 
     const startTime = performance.now();
 

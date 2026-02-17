@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import type { ResolvedConfig, GraphNode, GraphEdge } from '../../src/analyzer/types.js';
 
 const FIXTURE_PATH = resolve(__dirname, '../fixtures/go-basic');
+const INTERFACES_FIXTURE = resolve(__dirname, '../fixtures/go-interfaces');
 
 // Check if Go is available
 let goAvailable = false;
@@ -126,5 +127,90 @@ describe.skipIf(!goAvailable)('Go Analyzer', () => {
       expect(sanitize!.parameters[0].position).toBe(0);
       expect(sanitize!.parameters[1].position).toBe(1);
     });
+  });
+});
+
+describe.skipIf(!goAvailable)('Go Analyzer - Interface Dispatch', () => {
+  let nodes: GraphNode[];
+  let edges: GraphEdge[];
+
+  beforeAll(async () => {
+    const { GoAnalyzer } = await import('../../src/analyzer/go/go-analyzer.js');
+
+    const config: ResolvedConfig = {
+      language: 'go',
+      include: ['**/*.go'],
+      exclude: ['**/*_test.go', 'vendor/**'],
+      entryPoints: [],
+      output: './codegraph-output.json',
+      projectRoot: INTERFACES_FIXTURE,
+    };
+
+    const analyzer = new GoAnalyzer(config);
+    const result = await analyzer.analyze();
+    nodes = result.nodes;
+    edges = result.edges;
+  }, 30000);
+
+  it('should extract all functions and methods', () => {
+    // main, run, ServiceA.Process, ServiceB.Process, format
+    expect(nodes.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('should extract interface method implementations as methods', () => {
+    const processA = nodes.find(n => n.name === 'Process' && n.qualifiedName.includes('ServiceA'));
+    const processB = nodes.find(n => n.name === 'Process' && n.qualifiedName.includes('ServiceB'));
+    expect(processA).toBeDefined();
+    expect(processB).toBeDefined();
+    expect(processA!.kind).toBe('method');
+    expect(processB!.kind).toBe('method');
+  });
+
+  it('should create edges for interface method calls from main', () => {
+    // main() calls svc.Process() through Service interface
+    // Should create edges to both ServiceA.Process and ServiceB.Process
+    const mainToA = edges.find(
+      e => e.source.includes('main') && e.target.includes('ServiceA.Process')
+    );
+    const mainToB = edges.find(
+      e => e.source.includes('main') && e.target.includes('ServiceB.Process')
+    );
+    expect(mainToA).toBeDefined();
+    expect(mainToB).toBeDefined();
+  });
+
+  it('should resolve interface calls through function parameters', () => {
+    // run() calls svc.Process() through Service interface parameter
+    const runToA = edges.find(
+      e => e.source.includes('run') && e.target.includes('ServiceA.Process')
+    );
+    const runToB = edges.find(
+      e => e.source.includes('run') && e.target.includes('ServiceB.Process')
+    );
+    expect(runToA).toBeDefined();
+    expect(runToB).toBeDefined();
+  });
+
+  it('should resolve direct function calls within methods', () => {
+    // ServiceB.Process calls format()
+    const bToFormat = edges.find(
+      e => e.source.includes('ServiceB.Process') && e.target.includes('format')
+    );
+    expect(bToFormat).toBeDefined();
+  });
+
+  it('should resolve direct call from main to run', () => {
+    const mainToRun = edges.find(
+      e => e.source.includes('main') && e.target.includes('run')
+    );
+    expect(mainToRun).toBeDefined();
+  });
+
+  it('should mark interface dispatch edges with kind "interface"', () => {
+    const ifaceEdge = edges.find(
+      e => e.source.includes('main') && e.target.includes('ServiceA.Process')
+    );
+    expect(ifaceEdge).toBeDefined();
+    expect(ifaceEdge!.kind).toBe('interface');
   });
 });

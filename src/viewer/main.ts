@@ -239,9 +239,22 @@ async function init() {
         layoutMode = mode;
         if (mode === 'treemap') {
           forceLayout.pause();
-          treemapLayout.compute(updateLayout);
+          // Small delay to let any in-flight force ticks drain
+          setTimeout(() => {
+            treemapLayout.compute((positions) => {
+              updateLayout(positions);
+              // Camera looks DOWN at the treemap from above with slight angle
+              const extent = Math.sqrt(store.nodeCount) * 10;
+              graphScene.flyTo(
+                new THREE.Vector3(0, 0, 0),
+                0.8,
+                new THREE.Vector3(extent * 0.15, -extent * 0.15, extent * 1.1)
+              );
+            });
+          }, 50);
         } else {
           forceLayout.reheat();
+          graphScene.resetCamera();
         }
       },
     });
