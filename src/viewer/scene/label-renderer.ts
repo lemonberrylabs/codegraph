@@ -106,7 +106,7 @@ export class LabelRenderer {
     div.style.cssText = `
       color: #e4e4ef;
       font-family: 'Inter', -apple-system, sans-serif;
-      font-size: 11px;
+      font-size: 14px;
       background: rgba(22, 22, 31, 0.85);
       padding: 2px 6px;
       border-radius: 4px;

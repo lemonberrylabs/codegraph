@@ -42,8 +42,8 @@ export async function loadGraph(store: GraphStore): Promise<void> {
     }
 
     throw new Error(
-      'Could not load graph data. Start the server with `codegraph serve` or ' +
-      'provide a data URL via ?data=path/to/graph.json'
+      `Could not load graph data (${err instanceof Error ? err.message : String(err)}). ` +
+      'Start the server with `codegraph serve` or provide a data URL via ?data=path/to/graph.json'
     );
   }
 }

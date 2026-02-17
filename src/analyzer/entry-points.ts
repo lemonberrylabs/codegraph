@@ -93,12 +93,6 @@ export function propagateEntryPoints(
     adjacency.set(edge.source, targets);
   }
 
-  // Build incoming edge counts
-  const incomingCount = new Map<string, number>();
-  for (const edge of edges) {
-    incomingCount.set(edge.target, (incomingCount.get(edge.target) || 0) + 1);
-  }
-
   // BFS from entry points
   const reachable = new Set<string>();
   const queue: string[] = [...entryPointIds];
@@ -117,10 +111,7 @@ export function propagateEntryPoints(
   }
 
   // Classify nodes
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
-
   for (const node of nodes) {
-    const hasIncoming = (incomingCount.get(node.id) || 0) > 0;
     const isReachable = reachable.has(node.id);
 
     if (node.isEntryPoint) {
