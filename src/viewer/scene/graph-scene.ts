@@ -29,7 +29,7 @@ export class GraphScene {
     // Scene
     this.scene = new THREE.Scene();
     this.scene.background = palette.background;
-    this.scene.fog = new THREE.FogExp2(palette.background.getHex(), 0.0008);
+    this.scene.fog = new THREE.FogExp2(palette.background.getHex(), 0.0005);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -38,7 +38,7 @@ export class GraphScene {
       0.1,
       10000
     );
-    this.camera.position.set(0, 0, 500);
+    this.camera.position.set(0, 0, 800);
 
     // WebGL Renderer
     this.renderer = new THREE.WebGLRenderer({
@@ -67,7 +67,7 @@ export class GraphScene {
     this.controls.zoomSpeed = 1.2;
     this.controls.panSpeed = 0.8;
     this.controls.minDistance = 10;
-    this.controls.maxDistance = 3000;
+    this.controls.maxDistance = 5000;
 
     // Raycaster
     this.raycaster = new THREE.Raycaster();
@@ -150,7 +150,7 @@ export class GraphScene {
   resetCamera(): void {
     const startPos = this.camera.position.clone();
     const startTarget = this.controls.target.clone();
-    const endPos = new THREE.Vector3(0, 0, 500);
+    const endPos = new THREE.Vector3(0, 0, 800);
     const endTarget = new THREE.Vector3(0, 0, 0);
     const startTime = performance.now();
     const duration = 0.8;

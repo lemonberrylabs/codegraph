@@ -179,9 +179,8 @@ export class TreemapLayout {
 
     const cellW = rect.width / (cols + 1);
     const cellH = rect.height / (rows + 1);
-    // Subtle Z height — treemap is meant to be viewed from above.
-    // depthScale is small so Z just adds a gentle layering effect.
-    const depthScale = 5;
+    // Depth mapped to Y-axis (negative = deeper in call graph)
+    const depthScale = 20;
 
     for (let i = 0; i < count; i++) {
       const nodeIdx = nodeIndices[i];
@@ -189,8 +188,8 @@ export class TreemapLayout {
       const row = Math.floor(i / cols);
 
       const x = rect.x + cellW * (col + 1);
-      const y = rect.y + cellH * (row + 1);
-      const z = depths[nodeIdx] * depthScale;
+      const y = -depths[nodeIdx] * depthScale;
+      const z = rect.y + cellH * (row + 1);
 
       this.positions[nodeIdx * 3] = x;
       this.positions[nodeIdx * 3 + 1] = y;

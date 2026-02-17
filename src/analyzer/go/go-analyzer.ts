@@ -42,14 +42,26 @@ export class GoAnalyzer extends BaseAnalyzer {
     const result = await this.runGoHelper(helperBinary, input);
     const parsed = JSON.parse(result);
 
-    const nodes: GraphNode[] = (parsed.nodes || []).map((n: any) => ({
-      ...n,
-      language: 'go' as const,
-    }));
+    // The Go helper's type-aware path uses `packages.Load("./...")`
+    // which discovers ALL packages, ignoring our exclude patterns.
+    // Filter output to only include nodes from files we resolved.
+    const allowedFiles = new Set(files);
+
+    const nodes: GraphNode[] = (parsed.nodes || [])
+      .filter((n: any) => allowedFiles.has(n.filePath))
+      .map((n: any) => ({
+        ...n,
+        language: 'go' as const,
+      }));
+
+    const nodeIds = new Set(nodes.map((n: GraphNode) => n.id));
+    const edges = (parsed.edges || []).filter(
+      (e: any) => nodeIds.has(e.source) && nodeIds.has(e.target)
+    ) as GraphEdge[];
 
     return {
       nodes,
-      edges: (parsed.edges || []) as GraphEdge[],
+      edges,
       files: files.length,
     };
   }

@@ -243,12 +243,12 @@ async function init() {
           setTimeout(() => {
             treemapLayout.compute((positions) => {
               updateLayout(positions);
-              // Camera looks DOWN at the treemap from above with slight angle
+              // Camera above X/Z grid looking down at Y-depth layers
               const extent = Math.sqrt(store.nodeCount) * 10;
               graphScene.flyTo(
-                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, -extent * 0.2, 0),
                 0.8,
-                new THREE.Vector3(extent * 0.15, -extent * 0.15, extent * 1.1)
+                new THREE.Vector3(0, extent * 1.2, extent * 0.3)
               );
             });
           }, 50);

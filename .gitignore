@@ -31,3 +31,5 @@ src/analyzer/go/go-helper/go-helper.exe
 # Environment
 .env
 .env.local
+
+test-configs/

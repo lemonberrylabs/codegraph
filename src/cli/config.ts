@@ -71,7 +71,7 @@ export function resolveConfig(projectRoot: string, cliOptions: CliOptions = {}):
   // Load config file
   let fileConfig: Partial<CodeGraphConfig> = {};
   const configPath = cliOptions.config
-    ? resolve(absRoot, cliOptions.config)
+    ? resolve(cliOptions.config)
     : findConfigFile(absRoot);
 
   if (configPath && existsSync(configPath)) {
