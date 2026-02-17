@@ -8,6 +8,17 @@ import type { AnalyzerResult, GraphNode, GraphEdge } from '../types.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Resolve project root (works from both src/ and dist/src/)
+function findProjectRoot(): string {
+  let dir = __dirname;
+  while (dir !== dirname(dir)) {
+    if (existsSync(resolve(dir, 'package.json'))) return dir;
+    dir = dirname(dir);
+  }
+  return __dirname;
+}
+const projectRoot = findProjectRoot();
+
 export class GoAnalyzer extends BaseAnalyzer {
   async analyze(): Promise<AnalyzerResult> {
     const files = await this.resolveFiles();
@@ -19,7 +30,7 @@ export class GoAnalyzer extends BaseAnalyzer {
     // Determine Go module name
     const moduleName = this.config.go?.module || this.detectGoModule();
 
-    const helperDir = resolve(__dirname, 'go-helper');
+    const helperDir = resolve(projectRoot, 'src', 'analyzer', 'go', 'go-helper');
     const helperBinary = await this.ensureGoHelper(helperDir);
 
     const input = JSON.stringify({

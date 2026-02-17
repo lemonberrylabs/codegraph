@@ -68,7 +68,7 @@ export function createCli(): Command {
     .option('-e, --entry <patterns...>', 'Entry point file patterns')
     .option('-o, --output <path>', 'Output JSON file path')
     .option('-p, --port <port>', 'Server port', '8080')
-    .option('--open', 'Auto-open browser')
+    .option('--no-open', 'Do not auto-open browser')
     .option('--watch', 'Re-analyze on file changes')
     .option('-c, --config <path>', 'Path to config file')
     .option('--tsconfig <path>', 'Path to tsconfig.json (TypeScript only)')

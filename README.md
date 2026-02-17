@@ -18,8 +18,14 @@ npx codegraph analyze
 
 **Language-specific requirements:**
 
-- **Go analysis** requires the Go toolchain installed on your system.
+- **Go analysis** requires the [Go toolchain](https://go.dev/dl/) (1.18+) installed and on your `PATH`.
 - **Python analysis** requires Python 3.8+.
+
+> **Building from source?** The Go helper binary shipped in the repo is built for Linux ARM64. If you're on macOS or another platform, the CLI will auto-build it on first run using your local Go toolchain. You can also build it manually:
+>
+> ```bash
+> cd src/analyzer/go/go-helper && go build -o go-helper .
+> ```
 
 ## Quick Start
 
@@ -76,7 +82,7 @@ Supports all `analyze` options, plus:
 | Option | Description |
 |---|---|
 | `-p, --port <port>` | Server port (default: `8080`) |
-| `--open` | Auto-open browser |
+| `--no-open` | Do not auto-open browser (opens by default) |
 | `--watch` | Re-analyze on file changes and live-update the viewer |
 
 **Example:**

@@ -1,11 +1,23 @@
 import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { BaseAnalyzer } from '../base-analyzer.js';
 import type { AnalyzerResult, GraphNode, GraphEdge } from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Resolve project root (works from both src/ and dist/src/)
+function findProjectRoot(): string {
+  let dir = __dirname;
+  while (dir !== dirname(dir)) {
+    if (existsSync(resolve(dir, 'package.json'))) return dir;
+    dir = dirname(dir);
+  }
+  return __dirname;
+}
+const projectRoot = findProjectRoot();
 
 export class PythonAnalyzer extends BaseAnalyzer {
   async analyze(): Promise<AnalyzerResult> {
@@ -15,7 +27,7 @@ export class PythonAnalyzer extends BaseAnalyzer {
       return { nodes: [], edges: [], files: 0 };
     }
 
-    const helperScript = resolve(__dirname, 'py-helper', 'analyze.py');
+    const helperScript = resolve(projectRoot, 'src', 'analyzer', 'python', 'py-helper', 'analyze.py');
     const input = JSON.stringify({
       files,
       projectRoot: this.config.projectRoot,
