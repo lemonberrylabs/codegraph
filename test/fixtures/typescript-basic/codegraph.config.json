@@ -1,0 +1,13 @@
+{
+  "language": "typescript",
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.d.ts"],
+  "entryPoints": [
+    { "type": "function", "name": "main" },
+    { "type": "file", "pattern": "src/main.ts" }
+  ],
+  "output": "./codegraph-output.json",
+  "typescript": {
+    "tsconfig": "./tsconfig.json"
+  }
+}

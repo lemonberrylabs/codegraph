@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test output
+coverage/
+test/fixtures/typescript-perf/
+
+# Analysis output
+codegraph-output.json
+*.codegraph.json
+
+# Go helper binary
+src/analyzer/go/go-helper/go-helper
+src/analyzer/go/go-helper/go-helper.exe
+
+# Environment
+.env
+.env.local
