@@ -38,7 +38,14 @@ export function startWatcher(
   const triggerAnalysis = (filePath: string, event: string) => {
     pendingChanges.add(filePath);
 
-    if (analyzing) return;
+    if (analyzing) {
+      // Clear any pending debounce timer to avoid double analysis
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      return;
+    }
 
     if (debounceTimer) {
       clearTimeout(debounceTimer);

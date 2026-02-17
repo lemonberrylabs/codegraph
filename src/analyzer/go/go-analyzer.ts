@@ -1,6 +1,6 @@
 import { spawn, execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { BaseAnalyzer } from '../base-analyzer.js';
 import type { AnalyzerResult, GraphNode, GraphEdge } from '../types.js';
@@ -46,7 +46,6 @@ export class GoAnalyzer extends BaseAnalyzer {
   private detectGoModule(): string {
     const goModPath = resolve(this.config.projectRoot, 'go.mod');
     if (existsSync(goModPath)) {
-      const { readFileSync } = require('node:fs');
       const content = readFileSync(goModPath, 'utf-8');
       const match = content.match(/^module\s+(.+)$/m);
       if (match) return match[1].trim();

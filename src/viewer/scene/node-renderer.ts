@@ -224,9 +224,15 @@ export class NodeRenderer {
   }
 
   dispose(): void {
-    this.instancedMesh?.geometry.dispose();
-    (this.instancedMesh?.material as THREE.Material)?.dispose();
-    this.entryMesh?.geometry.dispose();
-    (this.entryMesh?.material as THREE.Material)?.dispose();
+    if (this.instancedMesh) {
+      this.scene.scene.remove(this.instancedMesh);
+      this.instancedMesh.geometry.dispose();
+      (this.instancedMesh.material as THREE.Material).dispose();
+    }
+    if (this.entryMesh) {
+      this.scene.scene.remove(this.entryMesh);
+      this.entryMesh.geometry.dispose();
+      (this.entryMesh.material as THREE.Material).dispose();
+    }
   }
 }

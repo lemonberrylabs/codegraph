@@ -112,6 +112,72 @@ describe('Entry Points', () => {
       expect(nodes[1].status).toBe('live');
       expect(nodes[1].color).toBe('yellow');
     });
+
+    it('should mark entry point function as live even with no callers (entry saves function)', () => {
+      const nodes = [
+        createTestNode({ id: 'A', name: 'A', isEntryPoint: true }),
+      ];
+
+      propagateEntryPoints(nodes, [], ['A']);
+
+      expect(nodes[0].status).toBe('entry');
+      expect(nodes[0].color).toBe('blue');
+    });
+
+    it('should handle recursive function (self-edge) — dead if unreachable from entry', () => {
+      const nodes = [
+        createTestNode({ id: 'A', name: 'A', isEntryPoint: true }),
+        createTestNode({ id: 'R', name: 'R' }),
+      ];
+
+      const edges: GraphEdge[] = [
+        { source: 'R', target: 'R', callSite: { filePath: 'r.ts', line: 1, column: 1 }, kind: 'direct', isResolved: true },
+      ];
+
+      propagateEntryPoints(nodes, edges, ['A']);
+
+      expect(nodes[1].status).toBe('dead');
+    });
+
+    it('should handle mutual recursion — both dead if unreachable from entry', () => {
+      const nodes = [
+        createTestNode({ id: 'entry', name: 'entry', isEntryPoint: true }),
+        createTestNode({ id: 'X', name: 'X' }),
+        createTestNode({ id: 'Y', name: 'Y' }),
+      ];
+
+      const edges: GraphEdge[] = [
+        { source: 'X', target: 'Y', callSite: { filePath: 'x.ts', line: 1, column: 1 }, kind: 'direct', isResolved: true },
+        { source: 'Y', target: 'X', callSite: { filePath: 'y.ts', line: 1, column: 1 }, kind: 'direct', isResolved: true },
+      ];
+
+      propagateEntryPoints(nodes, edges, ['entry']);
+
+      // X and Y call each other but are not reachable from entry
+      expect(nodes[1].status).toBe('dead');
+      expect(nodes[2].status).toBe('dead');
+    });
+
+    it('should mark isolated call chains as dead (hasIncoming but no entry reachability)', () => {
+      const nodes = [
+        createTestNode({ id: 'entry', name: 'entry', isEntryPoint: true }),
+        createTestNode({ id: 'live', name: 'live' }),
+        createTestNode({ id: 'orphanCaller', name: 'orphanCaller' }),
+        createTestNode({ id: 'orphanCallee', name: 'orphanCallee' }),
+      ];
+
+      const edges: GraphEdge[] = [
+        { source: 'entry', target: 'live', callSite: { filePath: 'e.ts', line: 1, column: 1 }, kind: 'direct', isResolved: true },
+        { source: 'orphanCaller', target: 'orphanCallee', callSite: { filePath: 'o.ts', line: 1, column: 1 }, kind: 'direct', isResolved: true },
+      ];
+
+      propagateEntryPoints(nodes, edges, ['entry']);
+
+      expect(nodes[1].status).toBe('live');
+      // orphanCallee has an incoming edge but is NOT reachable from entry
+      expect(nodes[2].status).toBe('dead');
+      expect(nodes[3].status).toBe('dead');
+    });
   });
 
   describe('createEntryNode', () => {

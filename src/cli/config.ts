@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
+import { createRequire } from 'node:module';
 import type { CodeGraphConfig, ResolvedConfig, Language } from '../analyzer/types.js';
 
 const CONFIG_FILENAMES = ['codegraph.config.json', 'codegraph.config.yaml'];
@@ -44,8 +45,8 @@ export function loadConfigFile(configPath: string): Partial<CodeGraphConfig> {
   const content = readFileSync(configPath, 'utf-8');
 
   if (configPath.endsWith('.yaml') || configPath.endsWith('.yml')) {
-    // Dynamic import for yaml
-    const yaml = require('js-yaml') as typeof import('js-yaml');
+    const esmRequire = createRequire(import.meta.url);
+    const yaml = esmRequire('js-yaml') as typeof import('js-yaml');
     return yaml.load(content) as Partial<CodeGraphConfig>;
   }
 

@@ -150,18 +150,19 @@ export class GraphScene {
   }
 
   resetCamera(): void {
-    this.flyTo(new THREE.Vector3(0, 0, 0), 0.8);
-    // Also reset the camera distance
     const startPos = this.camera.position.clone();
+    const startTarget = this.controls.target.clone();
     const endPos = new THREE.Vector3(0, 0, 500);
+    const endTarget = new THREE.Vector3(0, 0, 0);
     const startTime = performance.now();
+    const duration = 0.8;
 
     const animate = () => {
       const elapsed = (performance.now() - startTime) / 1000;
-      const t = Math.min(1, elapsed / 0.8);
+      const t = Math.min(1, elapsed / duration);
       const eased = easeOutCubic(t);
       this.camera.position.lerpVectors(startPos, endPos, eased);
-      this.controls.target.set(0, 0, 0);
+      this.controls.target.lerpVectors(startTarget, endTarget, eased);
       if (t < 1) requestAnimationFrame(animate);
     };
     animate();

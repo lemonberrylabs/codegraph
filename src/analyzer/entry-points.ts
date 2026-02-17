@@ -126,7 +126,7 @@ export function propagateEntryPoints(
     if (node.isEntryPoint) {
       node.status = 'entry';
       node.color = 'blue';
-    } else if (isReachable || hasIncoming) {
+    } else if (isReachable) {
       node.status = 'live';
       node.color = node.unusedParameters.length > 0 ? 'yellow' : 'green';
     } else {

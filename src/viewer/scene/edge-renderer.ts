@@ -112,38 +112,29 @@ export class EdgeRenderer {
   /** Highlight edges for a specific node (incoming + outgoing) */
   highlightForNode(nodeId: string): void {
     this.resetColors();
-    const palette = getPalette();
     const incoming = getPalette().edgeIncoming;
     const outgoing = getPalette().edgeOutgoing;
 
-    // Find incoming edges (target = nodeId)
-    const inEdges = this.store.getIncomingEdges(nodeId);
-    const outEdges = this.store.getOutgoingEdges(nodeId);
+    // Use NodeIndex edge indices directly (O(1) per edge instead of O(n) indexOf)
+    const nodeIdx = this.store.getNodeById(nodeId);
+    if (!nodeIdx) return;
 
-    const edges = this.store.edges;
-
-    for (const edge of inEdges) {
-      const idx = edges.indexOf(edge);
-      if (idx >= 0) {
-        this.colorBuffer[idx * 6] = incoming.r;
-        this.colorBuffer[idx * 6 + 1] = incoming.g;
-        this.colorBuffer[idx * 6 + 2] = incoming.b;
-        this.colorBuffer[idx * 6 + 3] = incoming.r;
-        this.colorBuffer[idx * 6 + 4] = incoming.g;
-        this.colorBuffer[idx * 6 + 5] = incoming.b;
-      }
+    for (const idx of nodeIdx.incomingEdges) {
+      this.colorBuffer[idx * 6] = incoming.r;
+      this.colorBuffer[idx * 6 + 1] = incoming.g;
+      this.colorBuffer[idx * 6 + 2] = incoming.b;
+      this.colorBuffer[idx * 6 + 3] = incoming.r;
+      this.colorBuffer[idx * 6 + 4] = incoming.g;
+      this.colorBuffer[idx * 6 + 5] = incoming.b;
     }
 
-    for (const edge of outEdges) {
-      const idx = edges.indexOf(edge);
-      if (idx >= 0) {
-        this.colorBuffer[idx * 6] = outgoing.r;
-        this.colorBuffer[idx * 6 + 1] = outgoing.g;
-        this.colorBuffer[idx * 6 + 2] = outgoing.b;
-        this.colorBuffer[idx * 6 + 3] = outgoing.r;
-        this.colorBuffer[idx * 6 + 4] = outgoing.g;
-        this.colorBuffer[idx * 6 + 5] = outgoing.b;
-      }
+    for (const idx of nodeIdx.outgoingEdges) {
+      this.colorBuffer[idx * 6] = outgoing.r;
+      this.colorBuffer[idx * 6 + 1] = outgoing.g;
+      this.colorBuffer[idx * 6 + 2] = outgoing.b;
+      this.colorBuffer[idx * 6 + 3] = outgoing.r;
+      this.colorBuffer[idx * 6 + 4] = outgoing.g;
+      this.colorBuffer[idx * 6 + 5] = outgoing.b;
     }
 
     const colorAttr = this.lineSegments.geometry.getAttribute('color') as THREE.BufferAttribute;
@@ -184,7 +175,10 @@ export class EdgeRenderer {
   }
 
   dispose(): void {
-    this.lineSegments?.geometry.dispose();
-    (this.lineSegments?.material as THREE.Material)?.dispose();
+    if (this.lineSegments) {
+      this.scene.scene.remove(this.lineSegments);
+      this.lineSegments.geometry.dispose();
+      (this.lineSegments.material as THREE.Material).dispose();
+    }
   }
 }

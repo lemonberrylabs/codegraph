@@ -1,6 +1,6 @@
 import express from 'express';
 import { createServer } from 'node:http';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -82,6 +82,13 @@ export async function startServer(
     }
 
     const absPath = resolve(config.projectRoot, file);
+
+    // Prevent path traversal — ensure resolved path stays within project root
+    if (!absPath.startsWith(config.projectRoot + '/') && absPath !== config.projectRoot) {
+      res.status(400).json({ error: 'Invalid file path' });
+      return;
+    }
+
     if (!existsSync(absPath)) {
       res.status(404).json({ error: 'File not found' });
       return;
@@ -90,23 +97,31 @@ export async function startServer(
     const location = line ? `${absPath}:${line}` : absPath;
 
     try {
-      // Try VS Code first
-      execSync(`code --goto "${location}"`, { stdio: 'pipe', timeout: 3000 });
-      res.json({ opened: true, editor: 'vscode' });
+      // Try VS Code first (use spawnSync with args array to prevent injection)
+      const result = spawnSync('code', ['--goto', location], { stdio: 'pipe', timeout: 3000 });
+      if (result.status === 0) {
+        res.json({ opened: true, editor: 'vscode' });
+        return;
+      }
     } catch {
-      // Try $EDITOR
-      const editor = process.env.EDITOR;
-      if (editor) {
-        try {
-          execSync(`${editor} "${absPath}"`, { stdio: 'pipe', timeout: 3000 });
+      // Fall through to $EDITOR
+    }
+
+    // Try $EDITOR
+    const editor = process.env.EDITOR;
+    if (editor) {
+      try {
+        const result = spawnSync(editor, [absPath], { stdio: 'pipe', timeout: 3000 });
+        if (result.status === 0) {
           res.json({ opened: true, editor });
-        } catch {
-          res.status(500).json({ error: 'Could not open editor' });
+          return;
         }
-      } else {
-        res.status(500).json({ error: 'No editor available (set $EDITOR or install VS Code)' });
+      } catch {
+        // Fall through
       }
     }
+
+    res.status(500).json({ error: 'No editor available (set $EDITOR or install VS Code)' });
   });
 
   // Serve the viewer (static files)

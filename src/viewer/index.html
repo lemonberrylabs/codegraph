@@ -149,7 +149,7 @@
     }
 
     .search-result-path {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--text-muted);
       margin-top: 2px;
     }
@@ -178,7 +178,7 @@
     }
 
     #stats-overlay h3 {
-      font-size: 11px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-muted);
@@ -253,7 +253,7 @@
     }
 
     .panel-section h3 {
-      font-size: 11px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-muted);
@@ -274,7 +274,7 @@
       display: inline-block;
       padding: 2px 8px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
     }
 
@@ -314,7 +314,7 @@
 
     .call-list .file-ref {
       color: var(--text-muted);
-      font-size: 11px;
+      font-size: 14px;
     }
 
     /* Tooltip */
@@ -342,13 +342,13 @@
 
     #tooltip .path {
       color: var(--text-muted);
-      font-size: 12px;
+      font-size: 14px;
       margin-bottom: 6px;
     }
 
     #tooltip .meta {
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: 14px;
     }
 
     /* Keyboard shortcuts help */
@@ -385,7 +385,7 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1px 6px;
-      font-size: 12px;
+      font-size: 14px;
       font-family: monospace;
     }
 
@@ -459,7 +459,7 @@
     .filter-section:last-child { border-bottom: none; }
 
     .filter-section h4 {
-      font-size: 11px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-muted);
@@ -527,8 +527,8 @@
   </div>
 
   <!-- Toolbar -->
-  <div id="toolbar">
-    <button class="toolbar-btn active" data-filter="all" title="Show all (1)">All</button>
+  <div id="toolbar" role="toolbar" aria-label="Graph controls">
+    <button class="toolbar-btn active" data-filter="all" title="Show all (1)" aria-pressed="true">All</button>
     <button class="toolbar-btn" data-filter="dead" title="Dead code (2)">
       <span style="color:var(--red)">●</span> Dead
     </button>
@@ -555,7 +555,7 @@
   </div>
 
   <!-- Export dropdown -->
-  <div id="export-menu" style="display:none; position:fixed; z-index:200; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:4px; min-width:200px;">
+  <div id="export-menu" role="menu" aria-label="Export options" style="display:none; position:fixed; z-index:200; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:4px; min-width:200px;">
     <button class="toolbar-btn" id="export-screenshot" style="width:100%;text-align:left">Screenshot (PNG)</button>
     <button class="toolbar-btn" id="export-json" style="width:100%;text-align:left">Dead Code Report (JSON)</button>
     <button class="toolbar-btn" id="export-csv" style="width:100%;text-align:left">Dead Code Report (CSV)</button>
@@ -563,16 +563,16 @@
   </div>
 
   <!-- Highlight mode dropdown -->
-  <div id="highlight-menu" style="display:none; position:fixed; z-index:200; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:4px; min-width:220px; max-height:400px; overflow-y:auto;"></div>
+  <div id="highlight-menu" role="menu" aria-label="Highlight modes" style="display:none; position:fixed; z-index:200; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:4px; min-width:220px; max-height:400px; overflow-y:auto;"></div>
 
   <!-- Search overlay -->
-  <div id="search-overlay">
-    <input type="text" id="search-input" placeholder="Search functions, files, parameters..." autocomplete="off" />
-    <div id="search-results"></div>
+  <div id="search-overlay" role="search" aria-label="Search graph nodes">
+    <input type="text" id="search-input" placeholder="Search functions, files, parameters..." autocomplete="off" aria-label="Search functions" />
+    <div id="search-results" role="listbox" aria-label="Search results"></div>
   </div>
 
   <!-- Tooltip -->
-  <div id="tooltip">
+  <div id="tooltip" role="tooltip" aria-live="polite">
     <div class="name" id="tooltip-name"></div>
     <div class="path" id="tooltip-path"></div>
     <div class="meta" id="tooltip-meta"></div>
@@ -582,16 +582,16 @@
   <div id="filter-panel"></div>
 
   <!-- Side panel -->
-  <div id="side-panel">
+  <div id="side-panel" role="complementary" aria-label="Node details panel">
     <div class="panel-header">
       <h2 id="panel-title">Node Details</h2>
-      <button class="panel-close" id="panel-close">✕</button>
+      <button class="panel-close" id="panel-close" aria-label="Close panel">✕</button>
     </div>
     <div class="panel-body" id="panel-body"></div>
   </div>
 
   <!-- Help overlay -->
-  <div id="help-overlay">
+  <div id="help-overlay" role="dialog" aria-label="Keyboard shortcuts">
     <h2>Keyboard Shortcuts</h2>
     <div class="shortcut-row"><span>Search</span><kbd>/</kbd> or <kbd>⌘K</kbd></div>
     <div class="shortcut-row"><span>Reset camera</span><kbd>R</kbd></div>
