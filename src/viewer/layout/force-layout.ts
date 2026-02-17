@@ -10,16 +10,25 @@ export class ForceLayout {
   private running: boolean = false;
   private alpha: number = 1.0;
 
+  private positionsReceived: boolean = false;
+
   constructor(store: GraphStore) {
     this.store = store;
     this.worker = new Worker(
       new URL('./force-worker.ts', import.meta.url),
-      { type: 'module' }
     );
+
+    this.worker.onerror = (e) => {
+      console.error('[ForceLayout] Worker error:', e.message, e);
+    };
 
     this.worker.onmessage = (e) => {
       const msg = e.data;
       if (msg.type === 'positions') {
+        if (!this.positionsReceived) {
+          this.positionsReceived = true;
+          console.log('[ForceLayout] First positions received, count:', msg.positions.length / 3, 'alpha:', msg.alpha);
+        }
         this.alpha = msg.alpha;
 
         // Only apply positions if simulation is still running.
@@ -123,6 +132,13 @@ export class ForceLayout {
     this.onPositionUpdate = onUpdate;
     this.running = true;
     this.worker.postMessage({ type: 'tick' });
+
+    // Detect silent worker failure
+    setTimeout(() => {
+      if (!this.positionsReceived) {
+        console.warn('[ForceLayout] No positions received from worker after 3s — worker may have failed to load');
+      }
+    }, 3000);
   }
 
   /** Pause the simulation */
