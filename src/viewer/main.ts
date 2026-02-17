@@ -8,6 +8,7 @@ import { EdgeRenderer } from './scene/edge-renderer.js';
 import { LabelRenderer } from './scene/label-renderer.js';
 import { ClusterRenderer } from './scene/cluster-renderer.js';
 import { ForceLayout } from './layout/force-layout.js';
+import { TreemapLayout } from './layout/treemap-layout.js';
 import { GraphRaycaster } from './interaction/raycaster.js';
 import { SelectionManager } from './interaction/selection.js';
 import { setupKeyboard } from './interaction/keyboard.js';
@@ -35,6 +36,8 @@ let selectionManager: SelectionManager;
 let wsClient: WebSocketClient;
 
 let clusterColorMode = false;
+let treemapLayout: TreemapLayout;
+let layoutMode: 'force' | 'treemap' = 'force';
 
 // ─── Init ───
 async function init() {
@@ -68,6 +71,9 @@ async function init() {
       labelRenderer.updatePositions();
       clusterRenderer.update();
     });
+
+    // Create treemap layout (for alternative layout mode)
+    treemapLayout = new TreemapLayout(store);
 
     // Create interaction handlers
     selectionManager = new SelectionManager(store);
@@ -210,6 +216,14 @@ async function init() {
       labelRenderer.updateLOD(dist);
     });
 
+    // ─── Layout update helper ───
+    const updateLayout = (positions: Float32Array) => {
+      nodeRenderer.updatePositions(positions);
+      edgeRenderer.updatePositions();
+      labelRenderer.updatePositions();
+      clusterRenderer.update();
+    };
+
     // ─── Toolbar ───
     setupToolbar({
       graphScene,
@@ -220,6 +234,16 @@ async function init() {
       store,
       getClusterColorMode: () => clusterColorMode,
       setClusterColorMode: (v) => { clusterColorMode = v; },
+      getLayoutMode: () => layoutMode,
+      setLayoutMode: (mode) => {
+        layoutMode = mode;
+        if (mode === 'treemap') {
+          forceLayout.pause();
+          treemapLayout.compute(updateLayout);
+        } else {
+          forceLayout.reheat();
+        }
+      },
     });
 
     // ─── Keyboard shortcuts ───

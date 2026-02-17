@@ -527,8 +527,69 @@ Performed comprehensive audit comparing PRD to implementation. Identified and re
 | 10.3 | Integration tests | COMPLETE |
 
 ### Remaining
-- [ ] PRD 6.7.2 — Treemap/nested layout alternative (medium effort, optional for v1)
+- [x] ~~PRD 6.7.2 — Treemap/nested layout alternative~~ — Done (iteration 8)
 - [ ] PRD 10.2 — Viewer visual tests (requires browser/Playwright)
 
-### Project Status Summary
-The project is fully feature-complete per PRD v1.0. All acceptance criteria from PRD Section 14 are met. The only remaining gaps are the optional treemap layout alternative (PRD explicitly calls it "not the default") and browser-based viewer testing.
+---
+
+## Ralph Loop Iteration 8
+
+**Date:** 2026-02-17
+**Status:** Treemap layout + build script added, all PRD features complete
+
+### What was accomplished
+
+#### Treemap Layout Alternative (PRD 6.7.2)
+- [x] New `src/viewer/layout/treemap-layout.ts`
+  - Squarified treemap algorithm partitions canvas into rectangular regions by cluster
+  - Z-axis represents call depth (BFS from entry points)
+  - Grid placement within each cluster rectangle
+- [x] "Force / Treemap" toggle button in toolbar
+  - Switches between force-directed and treemap layouts
+  - Pauses force simulation when in treemap mode
+  - Reheats simulation when switching back to force mode
+
+#### Build Script (PRD Section 9)
+- [x] `scripts/build-go-helper.sh` — Cross-compilation script for Go helper binary
+  - Targets: macOS arm64/amd64, Linux amd64/arm64, Windows amd64
+  - CGO_ENABLED=0 for static binaries, `-ldflags="-s -w"` for size optimization
+
+### Validation Results (Iteration 8)
+- **TypeScript type checking:** PASS (0 errors)
+- **Tests:** 115/115 passing (12 test files)
+- **Build:** `tsc` + `vite build` both clean
+
+### Final PRD Compliance — 100% Features Implemented
+| PRD Section | Feature | Status |
+|-------------|---------|--------|
+| 5.4 | Node/Edge extraction (TS, Go, Python) | COMPLETE |
+| 5.5 | Language-specific analysis | COMPLETE |
+| 5.6 | Entry point propagation + [entry] node | COMPLETE |
+| 5.7 | Output JSON schema | COMPLETE |
+| 6.3.2 | Rendering (InstancedMesh, Lines, CSS2D) | COMPLETE |
+| 6.3.3 | LOD with smooth transitions | COMPLETE |
+| 6.3.4 | Force-directed layout in Web Worker | COMPLETE |
+| 6.4.1 | Camera controls + auto-rotate | COMPLETE |
+| 6.4.2 | Node interaction (hover, click, multi-select) | COMPLETE |
+| 6.4.3 | 15 keyboard shortcuts (14 PRD + auto-rotate) | COMPLETE |
+| 6.5 | Side panel (node details + overview) | COMPLETE |
+| 6.6.1 | Fuzzy search | COMPLETE |
+| 6.6.2 | Filters (7/7 types + panel) | COMPLETE |
+| 6.6.3 | Highlight mode (separate from filters) | COMPLETE |
+| 6.7.1 | Force-based cluster visualization | COMPLETE |
+| 6.7.2 | Treemap/nested layout alternative | COMPLETE |
+| 6.8 | Export (PNG, JSON, CSV, Markdown) | COMPLETE |
+| 7 | Watch mode + WebSocket | COMPLETE |
+| 8.1 | Performance targets met | COMPLETE |
+| 8.5 | Accessibility (colorblind mode) | COMPLETE |
+| 9 | Project structure matches PRD | COMPLETE |
+| 10.1 | Analyzer tests | COMPLETE |
+| 10.3 | Integration tests | COMPLETE |
+
+### Project Status — COMPLETE
+All PRD v1.0 features have been implemented. The project includes:
+- **CLI:** `codegraph analyze` and `codegraph serve` with all flags
+- **Analyzers:** TypeScript, Go, Python — all produce PRD-compliant JSON
+- **Viewer:** Full 3D visualization with 2 layout modes, 7 filter types, highlight mode, search, export
+- **Tests:** 115 tests across 12 files (analyzers, graph store, entry points, integration, performance)
+- **Build:** Cross-platform Go helper build script, npm packaging configured

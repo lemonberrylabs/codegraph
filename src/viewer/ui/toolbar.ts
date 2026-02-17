@@ -24,6 +24,8 @@ export interface ToolbarDeps {
   store: GraphStore;
   getClusterColorMode: () => boolean;
   setClusterColorMode: (value: boolean) => void;
+  getLayoutMode: () => 'force' | 'treemap';
+  setLayoutMode: (mode: 'force' | 'treemap') => void;
 }
 
 /**
@@ -78,6 +80,18 @@ export function setupToolbar(deps: ToolbarDeps): void {
   document.getElementById('btn-autorotate')?.addEventListener('click', () => {
     const active = deps.graphScene.toggleAutoRotate();
     document.getElementById('btn-autorotate')?.classList.toggle('active', active);
+  });
+
+  // Layout mode toggle
+  document.getElementById('btn-layout')?.addEventListener('click', () => {
+    const current = deps.getLayoutMode();
+    const newMode = current === 'force' ? 'treemap' : 'force';
+    deps.setLayoutMode(newMode);
+    const btn = document.getElementById('btn-layout');
+    if (btn) {
+      btn.textContent = newMode === 'treemap' ? 'Treemap' : 'Force';
+      btn.classList.toggle('active', newMode === 'treemap');
+    }
   });
 
   // Highlight mode
