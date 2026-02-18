@@ -17,27 +17,27 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "3d-force-graph": "^1.73.0",
-    "chokidar": "^4.0.0",
-    "commander": "^12.1.0",
-    "express": "^4.21.0",
-    "fuse.js": "^7.0.0",
-    "glob": "^11.0.0",
-    "js-yaml": "^4.1.0",
+    "3d-force-graph": "^1.79.1",
+    "chokidar": "^5.0.0",
+    "commander": "^14.0.3",
+    "express": "^5.2.1",
+    "fuse.js": "^7.1.0",
+    "glob": "^13.0.5",
+    "js-yaml": "^4.1.1",
     "minimatch": "^10.2.1",
-    "open": "^10.1.0",
-    "three": "^0.170.0",
-    "typescript": "^5.6.0",
-    "ws": "^8.18.0"
+    "open": "^11.0.0",
+    "three": "^0.182.0",
+    "typescript": "^5.9.3",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.6",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.0.0",
-    "@types/three": "^0.170.0",
-    "@types/ws": "^8.5.0",
-    "vite": "^6.0.0",
-    "vitest": "^2.1.0"
+    "@types/node": "^25.2.3",
+    "@types/three": "^0.182.0",
+    "@types/ws": "^8.18.1",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18"

@@ -38,6 +38,7 @@ let wsClient: WebSocketClient;
 let clusterColorMode = false;
 let treemapLayout: TreemapLayout;
 let layoutMode: 'force' | 'treemap' = 'force';
+let needsForceFraming = true; // frame camera on first force positions
 
 // ─── Init ───
 async function init() {
@@ -60,20 +61,26 @@ async function init() {
     nodeRenderer.init();
     edgeRenderer.init();
 
-    // Create layout
+    // Create layouts
     forceLayout = new ForceLayout(store);
     forceLayout.init();
+    treemapLayout = new TreemapLayout(store);
 
     // Start layout simulation
     forceLayout.start((positions: Float32Array) => {
-      nodeRenderer.updatePositions(positions);
-      edgeRenderer.updatePositions();
-      labelRenderer.updatePositions();
-      clusterRenderer.update();
-    });
+      if (layoutMode === 'force') {
+        nodeRenderer.updatePositions(positions);
+        edgeRenderer.updatePositions();
+        labelRenderer.updatePositions();
+        clusterRenderer.update();
 
-    // Create treemap layout (for alternative layout mode)
-    treemapLayout = new TreemapLayout(store);
+        // Auto-frame camera on first force position update
+        if (needsForceFraming) {
+          needsForceFraming = false;
+          frameCameraToPositions(positions);
+        }
+      }
+    });
 
     // Create interaction handlers
     selectionManager = new SelectionManager(store);
@@ -253,8 +260,8 @@ async function init() {
             });
           }, 50);
         } else {
+          needsForceFraming = true;
           forceLayout.reheat();
-          graphScene.resetCamera();
         }
       },
     });
@@ -306,6 +313,25 @@ async function init() {
     loading.querySelector('.spinner')?.remove();
     console.error('Failed to initialize CodeGraph viewer:', err);
   }
+}
+
+/** Compute bounding box of positions and fly camera to frame the graph */
+function frameCameraToPositions(positions: Float32Array): void {
+  let minY = Infinity, maxY = -Infinity, maxXZ = 0;
+  for (let i = 0; i < positions.length / 3; i++) {
+    const y = positions[i * 3 + 1];
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    const xz = Math.max(Math.abs(positions[i * 3]), Math.abs(positions[i * 3 + 2]));
+    if (xz > maxXZ) maxXZ = xz;
+  }
+  const centerY = (minY + maxY) / 2;
+  const spread = Math.max(maxY - minY, maxXZ * 2, 100);
+  graphScene.flyTo(
+    new THREE.Vector3(0, centerY, 0),
+    0.8,
+    new THREE.Vector3(0, centerY + spread * 0.6, spread * 0.8)
+  );
 }
 
 function updateFilterButtons(filter: string): void {

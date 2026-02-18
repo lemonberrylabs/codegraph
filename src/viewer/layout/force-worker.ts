@@ -18,6 +18,7 @@ interface LayoutNode {
 interface LayoutEdge {
   source: number;
   target: number;
+  strength: number; // pre-computed per-edge strength (scaled by degree)
 }
 
 interface InitMessage {
@@ -59,9 +60,12 @@ const DEPTH_STRENGTH = 0.3;
 const ALPHA_DECAY = 0.02;
 const ALPHA_MIN = 0.001;
 const VELOCITY_DECAY = 0.4;
+const MAX_VELOCITY = 50;       // cap per-axis velocity to prevent explosion
+const MAX_DISPLACEMENT = 5;    // cap per-edge link displacement
 
 let nodes: LayoutNode[] = [];
 let edges: LayoutEdge[] = [];
+let nodeDegrees: number[] = []; // edge count per node
 let clusterCentroids: { x: number; y: number; z: number; count: number }[] = [];
 let alpha = 1.0;
 let paused = false;
@@ -88,6 +92,12 @@ self.onmessage = (e: MessageEvent<WorkerMessage>) => {
     case 'reheat':
       alpha = 0.5;
       paused = false;
+      // Reset velocities to prevent carrying over unstable state
+      for (const node of nodes) {
+        node.vx = 0;
+        node.vy = 0;
+        node.vz = 0;
+      }
       break;
   }
 };
@@ -121,9 +131,21 @@ function initSimulation(msg: InitMessage): void {
     });
   }
 
-  // Convert edges
+  // Compute node degrees for link strength scaling
+  nodeDegrees = new Array(msg.nodeCount).fill(0);
   for (const [source, target] of msg.edges) {
-    edges.push({ source, target });
+    if (source < msg.nodeCount) nodeDegrees[source]++;
+    if (target < msg.nodeCount) nodeDegrees[target]++;
+  }
+
+  // Convert edges with degree-scaled strength (like d3-force)
+  for (const [source, target] of msg.edges) {
+    const degreeMax = Math.max(nodeDegrees[source] || 1, nodeDegrees[target] || 1);
+    edges.push({
+      source,
+      target,
+      strength: LINK_STRENGTH / Math.sqrt(degreeMax),
+    });
   }
 
   // Initialize cluster centroids
@@ -172,11 +194,16 @@ function tick(): void {
   applyCenterGravity();
   applyDepthLayerForce();
 
-  // Update positions
+  // Update positions with velocity cap
   for (const node of nodes) {
     node.vx *= VELOCITY_DECAY;
     node.vy *= VELOCITY_DECAY;
     node.vz *= VELOCITY_DECAY;
+
+    // Cap velocity to prevent numerical explosion
+    node.vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, node.vx));
+    node.vy = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, node.vy));
+    node.vz = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, node.vz));
 
     node.x += node.vx * alpha;
     node.y += node.vy * alpha;
@@ -189,8 +216,6 @@ function tick(): void {
 }
 
 function applyChargeForce(): void {
-  // Barnes-Hut approximation for large graphs would be better,
-  // but for simplicity use O(n^2) with early termination
   const n = nodes.length;
 
   // For large graphs, use spatial hashing
@@ -204,7 +229,7 @@ function applyChargeForce(): void {
       const dx = nodes[j].x - nodes[i].x;
       const dy = nodes[j].y - nodes[i].y;
       const dz = nodes[j].z - nodes[i].z;
-      const dist2 = dx * dx + dy * dy + dz * dz + 0.01;
+      const dist2 = dx * dx + dy * dy + dz * dz + 1.0; // softening: +1.0 (was +0.01)
       const dist = Math.sqrt(dist2);
 
       const force = CHARGE_STRENGTH / dist2;
@@ -257,7 +282,7 @@ function applyChargeForceApproximate(): void {
               const ddx = nodes[j].x - nodes[i].x;
               const ddy = nodes[j].y - nodes[i].y;
               const ddz = nodes[j].z - nodes[i].z;
-              const dist2 = ddx * ddx + ddy * ddy + ddz * ddz + 0.01;
+              const dist2 = ddx * ddx + ddy * ddy + ddz * ddz + 1.0;
               const dist = Math.sqrt(dist2);
 
               const force = CHARGE_STRENGTH / dist2;
@@ -290,7 +315,10 @@ function applyLinkForce(): void {
     const dz = t.z - s.z;
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
 
-    const displacement = (dist - LINK_DISTANCE) * LINK_STRENGTH;
+    // Scale by per-edge strength (inversely proportional to sqrt(max degree))
+    // and cap displacement to prevent high-degree nodes from exploding
+    const raw = (dist - LINK_DISTANCE) * edge.strength;
+    const displacement = Math.max(-MAX_DISPLACEMENT, Math.min(MAX_DISPLACEMENT, raw));
     const fx = (dx / dist) * displacement;
     const fy = (dy / dist) * displacement;
     const fz = (dz / dist) * displacement;
