@@ -23,7 +23,7 @@ npx @lemonberrylabs/codegraph analyze
 | Language | Requirement | Notes |
 |---|---|---|
 | TypeScript | None (built-in) | Uses the TypeScript Compiler API |
-| Go | [Go toolchain](https://go.dev/dl/) 1.21+ | Type-aware analysis with interface dispatch resolution |
+| Go | [Go toolchain](https://go.dev/dl/) 1.24+ | Type-aware analysis with interface dispatch resolution |
 | Python | Python 3.8+ | AST-based analysis via helper script |
 
 > **Building from source?** The Go helper binary is not shipped in the repo. The CLI auto-builds it on first run using your local Go toolchain. You can also build it manually:
@@ -72,7 +72,7 @@ codegraph serve -r /path/to/go/project -e cmd/api/main.go --watch
 ```
 
 **Requirements:**
-- Go 1.21+ on your `PATH`
+- Go 1.24+ on your `PATH`
 - A valid `go.mod` in the project root (required for type-aware analysis)
 - Dependencies fetched (`go mod download` — the analyzer loads packages via the Go build system)
 
