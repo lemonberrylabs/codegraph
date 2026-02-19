@@ -1,6 +1,6 @@
 {
-  "name": "codegraph",
-  "version": "1.0.0",
+  "name": "@lemonberrylabs/codegraph",
+  "version": "0.1.0",
   "description": "Codebase call-graph visualizer with dead code and unused parameter detection",
   "type": "module",
   "bin": {
@@ -39,13 +39,19 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
+  "packageManager": "pnpm@10.29.2",
   "engines": {
     "node": ">=18"
   },
   "files": [
     "dist",
     "src/analyzer/python/py-helper",
-    "src/analyzer/go/go-helper"
+    "src/analyzer/go/go-helper/main.go",
+    "src/analyzer/go/go-helper/go.mod",
+    "src/analyzer/go/go-helper/go.sum"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

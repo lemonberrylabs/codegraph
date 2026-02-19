@@ -95,7 +95,7 @@ export class GoAnalyzer extends BaseAnalyzer {
       return binaryPath;
     } catch (err) {
       throw new Error(
-        'Failed to build Go helper. Ensure the Go toolchain (1.18+) is installed.\n' +
+        'Failed to build Go helper. Ensure the Go toolchain (1.24+) is installed.\n' +
         (err as Error).message
       );
     }

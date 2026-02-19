@@ -2,18 +2,20 @@
 
 A local-first developer tool that performs static analysis on codebases (TypeScript, Go, Python), builds function-level call graphs, and renders them as interactive 3D visualizations. It detects dead code and unused parameters.
 
+![CodeGraph 3D viewer](docs/graph.png)
+
 ## Installation
 
 Requires **Node.js 18+**.
 
 ```bash
-npm install -g codegraph
+npm install -g @lemonberrylabs/codegraph
 ```
 
 Or run without installing:
 
 ```bash
-npx codegraph analyze
+npx @lemonberrylabs/codegraph analyze
 ```
 
 ### Language Requirements
@@ -258,7 +260,7 @@ The `analyze` command produces a JSON file containing:
 ### Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/lemonberrylabs/codegraph.git
 cd codegraph
 pnpm install
 ```
